@@ -4,6 +4,10 @@
 
 Streaming CSV file splitter/chunker written in golang
 
+## About
+
+Longma gives you the power to split a large CSV file into multiple files. Currently Longma includes the header/columns in every output file chunk. If you need file chunks without the header/columns open an issue and I will prioritize that feature.
+
 ## Status
 
 Early early
@@ -42,7 +46,15 @@ longma split example.csv
 * ability to output to tar.gz or zip
 * flag for lazy quotes on/off
 * flag for srict records per row flags
+* flag to include or exclude header/columns in file chunks
+* command to combine file chunks back into a single large csv file
+* make binaries available to download?
+* gui?
 
 ## Todo
 
 * fix license wars
+
+---
+
+⚓
