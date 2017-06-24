@@ -2,7 +2,7 @@
 
 ![longma: dragon horse](https://upload.wikimedia.org/wikipedia/commons/6/60/Waddell-p410-Chinese-LONG-Horse-Or-Horse-Dragon.jpg)
 
-Streaming CSV file splitter/chunker written in golang
+A true dragon horse has wings at its sides and walks upon the water without sinking.
 
 ## About
 
