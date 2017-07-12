@@ -1,4 +1,4 @@
-// Copyright © 2017 NAME HERE <EMAIL ADDRESS>
+// Copyright © 2017 Brian Danowski <briandanowski@gmail.com>
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,11 +14,13 @@
 package cmd
 
 import (
+	"compress/gzip"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -27,26 +29,33 @@ import (
 // splitCmd represents the split command
 var splitCmd = &cobra.Command{
 	Use:   "split /path/to/file/to/split",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "split a file into chunks",
+	Long: `Split a file into chunks
+	
+			use -r to specify rows per file
+	`,
 	Run: func(cmd *cobra.Command, args []string) {
+
 		if len(args) < 1 {
 			cmd.Usage()
 			return
 		}
+		flags := cmd.Flags()
+		lazy, err := flags.GetBool("lazy-quotes")
+		if err != nil {
+			log.Fatal(err)
+		}
 
-		rowsPerFile := 10000
+		rowsPerFile, err := flags.GetInt64("rows-per-file")
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		fmt.Println("split called")
 		fmt.Println(args[0])
 		inPath := args[0]
 
-		err := split(inPath, rowsPerFile)
+		err = split(inPath, rowsPerFile, lazy)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -66,10 +75,18 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// splitCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
 }
 
-func split(path string, rowsPerFile int) error {
+func split(path string, rowsPerFile int64, lazyQuotes bool) error {
 	fmt.Println(path)
+
+	//folderName := path + ""
+	//fmt.Println(folderName)
+
+	base := filepath.Base(path)
+
+	folderName := base + ".split"
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -77,19 +94,33 @@ func split(path string, rowsPerFile int) error {
 	}
 	defer f.Close()
 
-	cr := csv.NewReader(f)
-	cr.LazyQuotes = true
+	var cr *csv.Reader
+	if filepath.Ext(filepath.Base(path)) == ".gz" {
+		gr, err := gzip.NewReader(f)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		cr = csv.NewReader(gr)
+	} else {
+		cr = csv.NewReader(f)
+	}
+
+	cr.LazyQuotes = lazyQuotes
 	header, err := cr.Read()
 	if err != nil {
 		return err
+	}
+	if _, err := os.Stat(folderName); os.IsNotExist(err) {
+		os.Mkdir(folderName, 0700)
 	}
 
 	i := 0
 	for {
 
 		fileIndex := strconv.Itoa(i + 1)
-		outFilename := path[:len(path)-4] + "_" + fileIndex + ".csv"
-		out, err := os.OpenFile(outFilename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 666)
+		outFilename := base[:len(base)-4] + "_" + fileIndex + ".csv"
+		out, err := os.OpenFile(filepath.Join(folderName, outFilename), os.O_CREATE, 777)
 		if err != nil {
 			return err
 		}
@@ -110,7 +141,7 @@ func split(path string, rowsPerFile int) error {
 		cw.Write(header)
 		cw.Write(row1)
 
-		for j := 0; j < rowsPerFile; j++ {
+		for j := int64(0); j < rowsPerFile; j++ {
 			row, err := cr.Read()
 			if err == io.EOF {
 				return nil
