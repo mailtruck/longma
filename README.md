@@ -1,5 +1,5 @@
 # Longma 🐉🐎
-
+[![Build Status](https://travis-ci.org/mailtruck/longma.svg?branch=master)](https://travis-ci.org/mailtruck/longma)
 ![longma: dragon horse](https://upload.wikimedia.org/wikipedia/commons/6/60/Waddell-p410-Chinese-LONG-Horse-Or-Horse-Dragon.jpg)
 
 A true dragon horse has wings at its sides and walks upon the water without sinking.
@@ -39,8 +39,8 @@ longma split example.csv
 
 ## Roadmap
 
-* flag for lines per file
-* create and split files into a new directory
+* -flag for lines per file-
+* -create and split files into a new directory-
 * support splitting csv.gz files
 * flag for csv.gz or csv output
 * ability to output to tar.gz or zip
