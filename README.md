@@ -1,5 +1,7 @@
 # Longma 🐉🐎
+
 [![Build Status](https://travis-ci.org/mailtruck/longma.svg?branch=master)](https://travis-ci.org/mailtruck/longma)
+
 ![longma: dragon horse](https://upload.wikimedia.org/wikipedia/commons/6/60/Waddell-p410-Chinese-LONG-Horse-Or-Horse-Dragon.jpg)
 
 A true dragon horse has wings at its sides and walks upon the water without sinking.
@@ -50,10 +52,6 @@ longma split example.csv
 * command to combine file chunks back into a single large csv file
 * make binaries available to download?
 * gui?
-
-## Todo
-
-* fix license wars
 
 ---
 
