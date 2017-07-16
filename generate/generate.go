@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// GenerateCSV generates a csv. Lines includes header
 func GenerateCSV(filename string, lines int64) error {
 
 	header := []string{"Chien Qián", "Sun Xùn", "K'an", "Ken Gèn", "K'un Kūn", "Chen Zhèn", "Li", "Tui Duì"}
@@ -47,7 +48,7 @@ func GenerateCSV(filename string, lines int64) error {
 
 	cw.Write(header)
 
-	for i := int64(0); i < lines; i++ {
+	for i := int64(1); i < lines; i++ {
 		cw.Write(randomRow(header))
 	}
 

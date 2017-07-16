@@ -16,6 +16,7 @@ package cmd
 import (
 	"compress/gzip"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -25,6 +26,8 @@ import (
 
 	"github.com/spf13/cobra"
 )
+
+var err error
 
 // splitCmd represents the split command
 var splitCmd = &cobra.Command{
@@ -55,10 +58,12 @@ var splitCmd = &cobra.Command{
 		fmt.Println(args[0])
 		inPath := args[0]
 
-		err = split(inPath, rowsPerFile, lazy)
+		path, err := split(inPath, rowsPerFile, lazy)
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		fmt.Println(inPath + " split into " + path)
 
 	},
 }
@@ -78,19 +83,54 @@ func init() {
 
 }
 
-func split(path string, rowsPerFile int64, lazyQuotes bool) error {
-	fmt.Println(path)
+func getBaseBase(base string) (string, error) {
+	baseBase := base[0 : len(base)-len(filepath.Ext(base))]
+	ext := filepath.Ext(baseBase)
+	switch ext {
+	case ".csv":
+		return getBaseBase(baseBase)
+	case "":
+		return baseBase, nil
+	default:
+		return "", errors.New("Unknown file ext. Known file exts are .csv and .csv.gz")
+	}
+}
 
-	//folderName := path + ""
-	//fmt.Println(folderName)
+func getFolderName(base string) string {
+
+	baseBase, err := getBaseBase(base)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ret := baseBase + "-split"
+	if _, err := os.Stat(ret); err != nil {
+		return ret
+
+	}
+
+	// this needs its own function, but tonight i need to go to seleep
+	i := 1
+	for {
+		if _, err = os.Stat(ret + "_" + strconv.Itoa(i)); os.IsNotExist(err) {
+			return ret + "_" + strconv.Itoa(i)
+		}
+		i++
+
+	}
+}
+
+// split returns the path of folder that the files were split into
+func split(path string, rowsPerFile int64, lazyQuotes bool) (string, error) {
+	fmt.Println(path)
 
 	base := filepath.Base(path)
 
-	folderName := base + ".split"
+	folderName := getFolderName(base)
 
 	f, err := os.Open(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer f.Close()
 
@@ -109,7 +149,7 @@ func split(path string, rowsPerFile int64, lazyQuotes bool) error {
 	cr.LazyQuotes = lazyQuotes
 	header, err := cr.Read()
 	if err != nil {
-		return err
+		return "", err
 	}
 	if _, err := os.Stat(folderName); os.IsNotExist(err) {
 		os.Mkdir(folderName, 0700)
@@ -120,9 +160,9 @@ func split(path string, rowsPerFile int64, lazyQuotes bool) error {
 
 		fileIndex := strconv.Itoa(i + 1)
 		outFilename := base[:len(base)-4] + "_" + fileIndex + ".csv"
-		out, err := os.OpenFile(filepath.Join(folderName, outFilename), os.O_CREATE, 777)
+		out, err := os.OpenFile(filepath.Join(folderName, outFilename), os.O_WRONLY|os.O_CREATE, 0777)
 		if err != nil {
-			return err
+			return "", err
 		}
 		defer out.Close()
 
@@ -133,9 +173,9 @@ func split(path string, rowsPerFile int64, lazyQuotes bool) error {
 		// to hit EOF so we don't end up with a header only file
 		row1, err := cr.Read()
 		if err == io.EOF {
-			return nil
+			return "", nil
 		} else if err != nil {
-			return err
+			return "", err
 		}
 
 		cw.Write(header)
@@ -144,9 +184,9 @@ func split(path string, rowsPerFile int64, lazyQuotes bool) error {
 		for j := int64(0); j < rowsPerFile; j++ {
 			row, err := cr.Read()
 			if err == io.EOF {
-				return nil
+				return folderName, nil
 			} else if err != nil {
-				return err
+				return "", err
 			}
 
 			cw.Write(row)
@@ -154,4 +194,5 @@ func split(path string, rowsPerFile int64, lazyQuotes bool) error {
 
 		i++
 	}
+
 }
