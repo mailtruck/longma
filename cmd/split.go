@@ -160,7 +160,7 @@ func split(path string, rowsPerFile int64, lazyQuotes bool) (string, error) {
 
 		fileIndex := strconv.Itoa(i + 1)
 		outFilename := base[:len(base)-4] + "_" + fileIndex + ".csv"
-		out, err := os.OpenFile(filepath.Join(folderName, outFilename), os.O_WRONLY|os.O_CREATE, 0777)
+		out, err := os.OpenFile(filepath.Join(folderName, outFilename), os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			return "", err
 		}

@@ -17,7 +17,7 @@ func GenerateCSV(filename string, lines int64) error {
 
 	header := []string{"Chien Qián", "Sun Xùn", "K'an", "Ken Gèn", "K'un Kūn", "Chen Zhèn", "Li", "Tui Duì"}
 
-	out, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0777)
+	out, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		return errors.Wrap(err, "error opening file to write")
 	}
