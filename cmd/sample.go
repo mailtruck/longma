@@ -26,7 +26,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// splitCmd represents the split command
+// sampleCmd represents the split command
 var sampleCmd = &cobra.Command{
 	Use:   "sample /path/to/file/to/split",
 	Short: "make a smaller dataset",
@@ -50,7 +50,7 @@ var sampleCmd = &cobra.Command{
 		fmt.Println(args[0])
 		inPath := args[0]
 
-		path, err := sample(inPath, rowsPerFile)
+		_, err = sample(inPath, rowsPerFile)
 		if err != nil {
 			log.Fatal(err)
 		}
