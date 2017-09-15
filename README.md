@@ -38,12 +38,13 @@ Split a CSV file into chunks:
 longma split example.csv
 ```
 
+# Features
+
+* support splitting csv.gz files
+* flag for lines per file: -r
 
 ## Roadmap
 
-* -flag for lines per file-
-* -create and split files into a new directory-
-* support splitting csv.gz files
 * flag for csv.gz or csv output
 * ability to output to tar.gz or zip
 * flag for lazy quotes on/off
@@ -51,7 +52,14 @@ longma split example.csv
 * flag to include or exclude header/columns in file chunks
 * command to combine file chunks back into a single large csv file
 * make binaries available to download?
-* gui?
+  * do releases
+* gui?  - wip
+
+## To test:
+
+What happens if you run a sample on something that has a non csv file?
+What happens if you try to split on a gz thats not a csv?
+What happens if you run sample on a dir twice?
 
 ---
 
