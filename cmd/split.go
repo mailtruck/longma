@@ -14,6 +14,7 @@
 package cmd
 
 import (
+	"bufio"
 	"compress/gzip"
 	"encoding/csv"
 	"fmt"
@@ -54,11 +55,16 @@ var splitCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		compressed, err := flags.GetBool("compressed")
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		fmt.Println("split called")
 		fmt.Println(args[0])
 		inPath := args[0]
 
-		path, err := split(inPath, rowsPerFile, lazy)
+		path, err := split(inPath, rowsPerFile, lazy, compressed)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -80,6 +86,7 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// splitCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	splitCmd.Flags().BoolP("compressed", "", false, "With this flag, split will output .csv.gz instead of .csv")
 
 }
 
@@ -121,7 +128,7 @@ func getFolderName(base string) string {
 }
 
 // split returns the path of folder that the files were split into
-func split(path string, rowsPerFile int64, lazyQuotes bool) (string, error) {
+func split(path string, rowsPerFile int64, lazyQuotes, compressed bool) (string, error) {
 	fmt.Println(path)
 
 	base := filepath.Base(path)
@@ -159,13 +166,27 @@ func split(path string, rowsPerFile int64, lazyQuotes bool) (string, error) {
 	for {
 
 		fileIndex := strconv.Itoa(i + 1)
-		outFilename := base[:len(base)-4] + "_" + fileIndex + ".csv"
+		outFilename := base[:len(base)-len(filepath.Ext(base))] + "_" + fileIndex + ".csv"
+		if compressed {
+			outFilename = outFilename + ".gz"
+		}
 		out, err := os.OpenFile(filepath.Join(folderName, outFilename), os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			return "", err
 		}
 
-		cw := csv.NewWriter(out)
+		var cw *csv.Writer
+		var gw *gzip.Writer
+		var bw *bufio.Writer
+
+		if compressed {
+			gw = gzip.NewWriter(out)
+			bw = bufio.NewWriter(gw)
+			cw = csv.NewWriter(bw)
+
+		} else {
+			cw = csv.NewWriter(out)
+		}
 
 		// read before writing the header just incase we are about
 		// to hit EOF so we don't end up with a header only file
@@ -190,6 +211,11 @@ func split(path string, rowsPerFile int64, lazyQuotes bool) (string, error) {
 			cw.Write(row)
 		}
 		// closing explicity because it's possible to have too many files open
+		if compressed {
+			bw.Flush()
+			gw.Flush()
+			gw.Close()
+		}
 		cw.Flush()
 		err = out.Close()
 		if err != nil {
