@@ -16,7 +16,6 @@ package cmd
 import (
 	"compress/gzip"
 	"encoding/csv"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -24,6 +23,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -164,10 +164,8 @@ func split(path string, rowsPerFile int64, lazyQuotes bool) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		defer out.Close()
 
 		cw := csv.NewWriter(out)
-		defer cw.Flush()
 
 		// read before writing the header just incase we are about
 		// to hit EOF so we don't end up with a header only file
@@ -191,7 +189,12 @@ func split(path string, rowsPerFile int64, lazyQuotes bool) (string, error) {
 
 			cw.Write(row)
 		}
-
+		// closing explicity because it's possible to have too many files open
+		cw.Flush()
+		err = out.Close()
+		if err != nil {
+			log.Fatal(errors.Wrap(err, "closing file"))
+		}
 		i++
 	}
 
